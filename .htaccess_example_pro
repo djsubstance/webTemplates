@@ -1,0 +1,158 @@
+RewriteEngine On
+ErrorDocument 404 https://<domain.com>/error/404.php
+ErrorDocument 403 https://<domain.com>/error/403.php
+
+AddCharset utf-8 .html .css .js
+DefaultLanguage en-US
+
+RewriteCond %{HTTP_HOST} !^<domain.com>$
+RewriteRule ^(.*)$ https://<domain.com>/$1 [R=301,L]
+
+
+# Redirect any http://(www).<domain.com> -> https://<domain.com>
+RewriteCond %{HTTP_HOST} !^<domain.com>$
+RewriteRule ^(.*)$ https://<domain.com>/$1 [R=301,L]
+
+# Disallow remote wget or wget recursive
+RewriteCond %{HTTP_USER_AGENT} wget.* [NC]
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+RewriteCond %{REQUEST_URI} !^/\.well-known/cpanel-dcv/[0-9a-zA-Z_-]+$
+RewriteCond %{REQUEST_URI} !^/\.well-known/pki-validation/(?:\ Ballot169)?
+RewriteCond %{REQUEST_URI} !^/\.well-known/pki-validation/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteRule .* - [F,L]
+
+
+# Disallow remote wget or wget recursive
+RewriteCond %{HTTP_USER_AGENT} wget.* [NC]
+RewriteRule .* - [F,L]
+
+RewriteCond %{HTTP_USER_AGENT} curl.* [NC]
+RewriteRule .* - [F,L]
+#  This only blocks based on UA
+
+# Make the following filetypes immediately downloadable (not streamable)
+AddType application/octet-stream .mp3 .avi .mpg .mov .pdf .xls .mp4 .flac
+# Various header fixes.
+
+
+<FilesMatch "\.(mov|mp3|pdf)$">
+ForceType application/octet-stream
+Header set Content-Disposition attachment
+</FilesMatch>
+
+
+<IfModule mod_mime.c>
+  # Data interchange 
+  # 2.2.x+
+   AddType application/javascript                      js
+    AddType application/x-httpd-php                     php
+    AddType text/xml                                    xml
+    # 2.2.x - 2.4.x
+    AddType application/json                            json
+    AddType application/rss+xml                         rss
+    # 2.4.x+
+    AddType application/json                            map
+    # CSS
+    Addtype text/css     css
+
+   # JavaScript
+    # 2.2.x+
+ # See: https://html.spec.whatwg.org/multipage/scripting.html#scriptingLanguages.
+    AddType application/javascript                      js
+  # Manifest files
+    # 2.2.x+
+    AddType application/manifest+json                   webmanifest
+    AddType text/cache-manifest                         appcache
+  # Media files
+    # 2.2.x - 2.4.x
+    AddType audio/mp3                                   mp3
+    AddType audio/mp4                                   f4a f4b m4a
+    AddType audio/ogg                                   oga ogg spx
+    AddType video/mp4                                   mp4 mp4v mpg4
+    AddType video/ogg                                   ogv
+    AddType video/webm                                  webm
+    AddType video/x-flv                                 flv
+ # 2.2.x+
+    AddType image/svg+xml                               svgz
+    AddType image/x-icon                                cur
+
+    # 2.4.x+
+    AddType image/png            png
+    AddType image/jpg      jpg jpeg 
+    AddType image/gif       gif
+    AddType image/webp                                  webp
+
+  # Web fonts
+    # 2.2.x - 2.4.x
+    AddType application/vnd.ms-fontobject               eot
+    # 2.2.x+
+    AddType font/woff                                   woff
+    AddType font/woff2                                  woff2
+    AddType font/ttf                                    ttf
+    AddType font/collection                             ttc
+    AddType font/otf                                    otf
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddCharset utf-8 .appcache \
+                     .atom \
+       .php \
+       .html \
+       .htm \
+                     .css \
+                     .js \
+                     .json \
+                     .manifest \
+                     .map \
+                     .mjs \
+                     .rdf \
+                     .rss \
+                     .vtt \
+                   .webmanifest \
+                     .xml
+</IfModule>
+
+#<IfModule mime_module>
+#  AddHandler application/x-httpd-ea-php74 .php .php7 .phtml
+#</IfModule>
+
+<IfModule php7_module>
+   php_flag display_errors Off   # This should be off in production
+   php_value max_execution_time 10
+   php_value max_input_time 30
+   php_value max_input_vars 1000
+   php_value memory_limit 256M
+   php_value post_max_size 260M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/tmp/savepath2.txt"  # Change
+   php_value upload_max_filesize 256M
+   php_flag zlib.output_compression On
+</IfModule>
+
+<IfModule lsapi_module>
+   php_flag display_errors Off
+   php_value max_execution_time 40
+   php_value max_input_time 30
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 260M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/tmp/savepath.txt"
+   php_value upload_max_filesize 6M
+   php_flag zlib.output_compression On
+</IfModule>
+
+## USER IP BANNING
+<Limit GET POST>
+order allow,deny
+ deny from 101.133.235.75
+ deny from 101.251.207.228
+ deny from 101.254.233.194
+ deny from 101.32.74.75
+ deny from 101.34.2.55
+ deny from 101.36.221.250
+ deny from 101.71.142.229
+ deny from 101.96.113.50
+ # You get the point - these IPs will be denied
+ allow from all
+</Limit>
