@@ -1,0 +1,193 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+# don't put duplicate lines in the history. See bash(1) for more options
+# ... or force ignoredups and ignorespace
+HISTCONTROL=ignoredups:ignorespace
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# some more ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+#if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+#    . /etc/bash_completion
+#fi
+export PS1='\e[1;30m[\e[1;37m9x\e[1;30m]\e[1;37m::\e[0;37m\][\[\e[1;30m\]\@\[\e[0;37m\]]\e[0;35m:\e[0;37m[\[\e[0;37m\]\e[1;37m\w\[\e[0;37;40m\]]\n\[\e[0;37m\][\[\e[1;36m\]\u\[\e[1;30m\]@\[\e[1;36m\]\h\[\e[0;37m\]]\[\e[0m\]\$ '
+# eval `ssh-agent -s`
+alias tb="nc termbin.com 9999"
+export TERM="vt100"
+export VULTR="RGYAKGBDFYHXTDFMMHLJF5SJU7UNOFKO5JGA"
+#echo "Set Dollars TERM -> "; echo $TERM;echo
+
+request_date=$(TZ=GMT LC_ALL=en_US.utf8 date "+%a %d %h %Y %H:%M:%S %Z")
+ints() (ip addr | awk '/UP/ {print $2}' | sed 's/.$//';)
+gDNS() (echo "Checking DNS Propogation of $1";curl -Ls --user-agent "Mozilla/4.0"  "https://viewdns.info/propagation/?domain=$1" | html2text| tee $1.txt;)
+gREVD() (echo "Checking Domains on NS $1";curl -Ls --user-agent "Mozilla/4.0" "https://viewdns.info/reversens/?ns=$1" | html2text| tee /tmp/ns_$1.txt;)
+gHead() (echo "Checking Domains on NS $1";curl -Ls --user-agent "Mozilla/4.0" "https://viewdns.info/httpheaders/?domain=$1" | html2text| tee /tmp/header_$1.txt;)
+gWHOIS() (echo "Checking ipv4/v6 for WHOIS on  $1";curl -sL  --user-agent "Mozilla/4.0" "https://whois.serveriai.lt/$1"|html2text  | tee /tmp/whois_$1.txt;)
+
+
+domainDNS() (echo "Checking Domain -> IP Propogation of $1";curl -Ls --user-agent "Mozilla/4.0"  "https://viewdns.info/reverseip/?host=$1&t=1" | html2text| tee $1.txt;)
+
+deepdns() (echo "grabbing current DNS for $1";echo;curl -sL "https://dnsrecords.io/$1" | html2text |awk "/./" | grep -v '\[comman\|type' ;echo)
+rfile() (while IFS= read -r line; do COMMAND_on $line; done < $1)
+
+
+
+alias rn="watch -n .1 \"netstat -an | grep tcp | awk '{print $1}' | cut -d\":\" -f 1 | sort |uniq -c | sort -n\""
+alias au="apt-get -y upgrade && apt-get -y update apt-get -y dist-upgrade apt-get -y autoclean"
+alias ag="apt-get -y install "
+alias nt="netstat -Woepctunvp"
+alias rederr=" 2> /dev/null"
+
+PATH="/home/subz/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="/home/subz/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="/home/subz/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"/home/subz/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/home/subz/perl5"; export PERL_MM_OPT;
+alias tt="openssl s_client -connect $1:$2 -tls1_2 2>/dev/null | openssl x509 -noout -text"
+alias certchk=" echo | openssl s_client -connect $1:$2  -brief;echo"
+alias gCert="echo | openssl s_client -showcerts -servername $1 -connect $1:$2 "
+alias gPort="lsof -i -P -n | grep LISTEN "
+
+checkAuth()(grep -iwR "failed\|for\ \|fatal\|error" /var/log/auth.log  | cut -d " " -f 11| sort| uniq| grep "\.")
+
+alias j="journalctl -xe"
+
+gTCP() (
+grep -v "rem_address" /proc/net/tcp  | awk 'function hextodec(str,ret,n,i,k,c){
+    ret = 0
+    n = length(str)
+    for (i = 1; i <= n; i++) {
+        c = tolower(substr(str, i, 1))
+        k = index("123456789abcdef", c)
+        ret = ret * 16 + k
+    }    return ret} {x=hextodec(substr($2,index($2,":")-2,2)); for (i=5; i>0; i-=2) x = x"."hextodec(substr($2,i,2))}{print x":"hextodec(substr($2,index($2,":")+1,4))}') # | json_pp | grep http| cut -d "\"" -f 3)
+
+gHead() (
+echo "trying CURL 100x for various methods on $1:"; echo
+for i in {1..5}; do
+curl -sI -X OPTIONS https://$1/|grep -i "allow:";
+curl -sI -X OPTIONS http://$1/|grep -i "allow:";
+curl -sI -X OPTIONS http://www.$1/|grep -i "allow:";
+curl -sI -X OPTIONS https://www.$1/|grep -i "allow:";
+done;echo )
+
+chkCert() ( openssl s_client -servername $1 -connect $1:443 2>/dev/null | openssl x509  -noout -dates;echo)
+
+dropLinks() (curl -sL  "https://www.html-code-generator.com/tools/link-extractor/?url=https%3A%2F%2F$1&link_type=all&_=1679614441236"   -H 'authority: www.html-code-generator.com'   -H 'accept: application/json, text/javascript, */*; q=0.01'   -H 'accept-language: en-US,en;q=0.9'   -H 'cache-control: no-cache'   -H 'cookie: apmmpaebfobifelkijhaljbmpcgbjbdo=382decdf-97da-4657-a686-1ba0854295c0; hcguser=sq4csuj0f789avt7fipl1s5968; hcgants=BCCDOS; dark-mode=dark; apmmpaebfobifelkijhaljbmpcgbjbdo=31952aed-1e17-4ef9-9d32-e794a75c3241'   -H 'dnt: 1'   -H 'pragma: no-cache'   -H 'referer: https://www.html-code-generator.com/tools/url-extractor'   -H 'sec-ch-ua: "Brave";v="111", "Not(A:Brand";v="8", "Chromium";v="111"'   -H 'sec-ch-ua-mobile: ?0'   -H 'sec-ch-ua-platform: "macOS"'   -H 'sec-fetch-dest: empty'  -H 'sec-fetch-mode: cors'   -H 'sec-fetch-site: same-origin'   -H 'sec-gpc: 1'   -H 'user-agent: Mozilla/5.0'   -H 'x-requested-with: XMLHttpRequest'   --compressed| jq;echo)
+quickTrace() (
+curl -sL --connect-timeout 5 "https://www.ipaddressguide.com/traceroute"   -H 'authority: www.ipaddressguide.com'   -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'   -H 'accept-language: en-US,en;q=0.9'   -H 'content-type: application/x-www-form-urlencoded'   -H 'cookie: SESSIONID=u29pkvicp0oce1kc4ns38rae07; _ga=GA1.1.1562271333.1677184182; __cf_bm=l8lzvPfrGq1RxcWZ7wlkxVzU2Yq4kFouBZDuIXsTO.s-1677189098-0-AUlxvWymSexYGf5glmDTI9IkjjE0RvuFuQoIVK3Qox2/DDDLdXkdI+taMmSpF0FVGEvefGin1u0LXhCf2KUlkKA6mJs1H2Rnvdp8tlJjvFHmMMR7fKTsjKXBBIkwZPcy0z+FVpyBiOumRI4TYCi6g4U=; _ga_8NXJQ3TBPM=GS1.1.1677189209.2.1.1677190081.0.0.0'   -H 'dnt: 1'   -H 'origin: https://www.ipaddressguide.com'   -H 'pragma: no-cache'   -H 'referer: https://www.ipaddressguide.com/traceroute'   -H 'sec-ch-ua: "Chromium";v="110", "Not A(Brand";v="24", "Google Chrome";v="110"'   -H 'sec-ch-ua-mobile: ?0'   -H 'sec-ch-ua-platform: "Windows"'   -H 'sec-fetch-dest: empty'   -H 'sec-fetch-mode: navigate'   -H 'sec-fetch-site: same-origin'   -H 'upgrade-insecure-requests: 1'   -H 'user-agent: Mozilla/5.0'  --data-raw "host=$1"  |html2text| grep ms | tee /tmp/$1_trace.txt
+echo;echo "output saved to:  /tmp/$1_trace.txt";echo )
+
+IPINFO="02d6ee23dc1449"
+
+rScan() (
+allThreads=(21 22 23 25 53 80 110 111 179 443 445 514 587 995 2080 2083 2087 1433 1434 2222 3000 3128 3306 5800 5801 5900 8080 8443 8888)
+
+if [ -z "$1" ] || [ -z "$2" ]
+  then
+    echo "No argument supplied"
+    echo "Usage: ./portCheck.sh --single|--common <hostname> <port#>";
+    echo "  --common (top 20 ports) no need for port if using this";
+fi
+
+
+for i in "$@" ; do [[ $i == "--common" ]] && echo "Scanning top 20 ports";
+for t in ${allThreads[@]}; do
+curl -sL --connect-timeout 4 --user-agent 'mozilla' 'https://codebeautify.org/iptools/openPortChecker' -X POST -H 'User-Agent: Mozilla/5.0'  -H 'Accept: application/json, text/javascript, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: deflate' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://codebeautify.org' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Referer: https://codebeautify.org/open-port-checker' -H 'Cookie: ezosuibasgeneris-1=91b8daf4-b462-46f5-6d60-ea204aa933c6; ezux_lpl_376552=1679331766397|3f7d1c27-2f2e-4323-6fb2-d0a31797e7e3|true; ezux_et_376552=26; ezux_tos_376552=2937; ezux_ifep_376552=true; ci_session=3ae8a814f793a874399887c98de45b72c34caa33' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'TE: trailers' --data-raw "domain=$2&port=$t"echo;done  && break ; done
+
+for i in "$@" ; do [[ $i == "--single" ]] && echo "Scanning One port";echo; echo "Host: $2:$3";
+print "\n"
+curl -sL --user-agent 'mozilla' 'https://codebeautify.org/iptools/openPortChecker' -X POST -H 'User-Agent: Mozilla/5.0' -H 'Accept: application/json, text/javascript, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: deflate' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://codebeautify.org' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Referer: https://codebeautify.org/open-port-checker' -H 'Cookie: ezosuibasgeneris-1=91b8daf4-b462-46f5-6d60-ea204aa933c6; ezux_lpl_376552=1679331766397|3f7d1c27-2f2e-4323-6fb2-d0a31797e7e3|true; ezux_et_376552=26; ezux_tos_376552=2937; ezux_ifep_376552=true; ci_session=3ae8a814f793a874399887c98de45b72c34caa33' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'TE: trailers' --data-raw "domain=$2&port=$3";echo && break; done
+
+)
+# The following Alias extracts URL/URI  from any data source
+alias Xurl='sed "s/http/\nhttp/g" | grep ^http | sed "s/\(^http[^ <]*\)\(.*\)/\1/g" | tr "\"" " "| tr ">" " " | tr "," " " | tr ")" " " '
+
+alias seg="ssh -D5555 root@segfault.net"
